@@ -1,0 +1,96 @@
+[
+  {
+    "ContainingType": "API.Controllers.TaskController",
+    "Method": "GetById",
+    "RelativePath": "Task",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Id",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.TaskController",
+    "Method": "Create",
+    "RelativePath": "Task",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "createTaskRequest",
+        "Type": "API.Requests.CreateTaskRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.TaskController",
+    "Method": "Update",
+    "RelativePath": "Task",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "updateTaskRequest",
+        "Type": "API.Requests.UpdateTaskRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.TaskController",
+    "Method": "SearchTask",
+    "RelativePath": "Task/search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "PageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "PageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "Name",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Status",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "AssignedTo",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SearchQuery",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
