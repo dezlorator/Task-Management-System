@@ -2,7 +2,7 @@
 using Domain.Models;
 using Infrastructure.Database.Condition;
 
-namespace Tests
+namespace Tests.Infrastructure.Database.Condition
 {
     [TestFixture]
     public class TaskConditionsTests

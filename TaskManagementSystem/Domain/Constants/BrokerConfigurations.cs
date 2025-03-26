@@ -7,6 +7,7 @@
             public static readonly string TaskCreatedQueue = "task.created";
             public static readonly string TaskUpdatedQueue = "task.updated";
             public static readonly string CreateTaskQueue = "task.create";
+            public static readonly string CreateTaskResponceQueue = "task.create.responce";
             public static readonly string SearchTaskQueue = "task.search";
             public static readonly string TaskSearchResponseQueue = "task.search.responce";
         }

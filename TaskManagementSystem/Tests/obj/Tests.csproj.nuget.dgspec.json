@@ -280,6 +280,9 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
+              "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\BusinessLogic\\BusinessLogic.csproj": {
+                "projectPath": "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\BusinessLogic\\BusinessLogic.csproj"
+              },
               "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\Domain\\Domain.csproj": {
                 "projectPath": "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\Domain\\Domain.csproj"
               },

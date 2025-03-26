@@ -8,6 +8,9 @@ using Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Database.Condition;
 using Infrastructure.MessageBroker;
+using RabbitMQ.Client;
+using Domain.Constants;
+using BusinessLogic.Services.ConsumerHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,10 +21,40 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskConditions, TaskConditions>();
-builder.Services.AddScoped<IMessageProduser, MessageProduser>();
+builder.Services.AddScoped<IConsumerHandler, CreateTaskHandler>();
+builder.Services.AddScoped<IConsumerHandler, SearchTaskHandler>();
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var factory = new ConnectionFactory
+    {
+        HostName = "localhost",
+        UserName = "guest",
+        Password = "guest"
+    };
 
-builder.Services.AddHostedService<CreateTaskMessageConsumer>();
-builder.Services.AddHostedService<SearchTaskMessageConsumer>();
+    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+});
+
+builder.Services.AddScoped<IChannel>(sp =>
+{
+    var connection = sp.GetRequiredService<IConnection>();
+    return connection.CreateChannelAsync().GetAwaiter().GetResult();
+});
+
+builder.Services.AddScoped<IMessageProduser>((sp)  =>
+{
+    var logger = sp.GetService<ILogger<MessageProduser>>()!;
+    var channel = sp.GetService<IChannel>()!;
+    return MessageProduser.Create(logger, channel).GetAwaiter().GetResult();
+});
+
+builder.Services.AddSingleton(sp => new Dictionary<string, IConsumerHandler>
+{
+    { BrokerConfigurations.QueueNames.CreateTaskQueue, sp.GetRequiredService<CreateTaskHandler>() },
+    { BrokerConfigurations.QueueNames.SearchTaskQueue, sp.GetRequiredService<SearchTaskHandler>() }
+});
+
+builder.Services.AddHostedService<MessageConsumer>();
 
 builder.Services.AddFluentValidationAutoValidation();
 

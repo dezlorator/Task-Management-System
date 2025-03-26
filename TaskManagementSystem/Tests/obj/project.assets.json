@@ -4231,6 +4231,7 @@
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "BusinessLogic >= 1.0.0",
       "Domain >= 1.0.0",
       "Infrastructure >= 1.0.0",
       "Microsoft.NET.Test.Sdk >= 17.11.1",
@@ -4273,6 +4274,9 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
+            "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\BusinessLogic\\BusinessLogic.csproj": {
+              "projectPath": "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\BusinessLogic\\BusinessLogic.csproj"
+            },
             "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\Domain\\Domain.csproj": {
               "projectPath": "C:\\Users\\danil\\source\\repos\\Task-Management-System\\TaskManagementSystem\\Domain\\Domain.csproj"
             },

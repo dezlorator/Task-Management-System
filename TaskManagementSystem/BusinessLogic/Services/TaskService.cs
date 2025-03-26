@@ -10,12 +10,12 @@ namespace BusinessLogic.Services
     public class TaskService : ITaskService
     {
         private readonly ITaskRepository _taskRepository;
-        private readonly IMessageProduser _serviceBusHandler;
+        private readonly IMessageProduser _messageProduces;
 
-        public TaskService(ITaskRepository taskRepository, IMessageProduser serviceBusHandler) 
+        public TaskService(ITaskRepository taskRepository, IMessageProduser messageProduces) 
         {
             _taskRepository = taskRepository;
-            _serviceBusHandler = serviceBusHandler;
+            _messageProduces = messageProduces;
         }
 
         public async Task<CreateTaskResponce> CreateTaskAsync(CreateTaskDTO request)
@@ -29,7 +29,7 @@ namespace BusinessLogic.Services
             };
 
             var id = await _taskRepository.CreateAsync(task);
-            await _serviceBusHandler.PublishTaskCreatedAsync(id);
+            await _messageProduces.PublishTaskCreatedAsync(id);
             return new CreateTaskResponce(id);
         }
 
@@ -61,7 +61,7 @@ namespace BusinessLogic.Services
 
             if (updateNeeded)
             {
-                await _serviceBusHandler.PublishTaskUpdatedAsync(request.Id);
+                await _messageProduces.PublishTaskUpdatedAsync(request.Id);
                 await _taskRepository.SaveChangesAsync();
             }
         }

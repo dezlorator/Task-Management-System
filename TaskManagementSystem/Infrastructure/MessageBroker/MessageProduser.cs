@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Domain.Constants;
+using Domain.Models;
 using Infrastructure.MessageBroker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -7,37 +8,45 @@ using RabbitMQ.Client;
 
 public class MessageProduser : IMessageProduser, IDisposable
 {
-    private readonly IConnection _connection;
     private readonly IChannel _channel;
     private readonly int _maxRetries = 3;
     private readonly TimeSpan _retryDelay = TimeSpan.FromSeconds(2);
     private readonly ILogger _logger;
 
-    public MessageProduser(ILogger<IMessageProduser> logger)
+    private MessageProduser(ILogger<IMessageProduser> logger, IChannel channel)
     {
         _logger = logger;
+        _channel = channel;
+    }
 
-        var factory = new ConnectionFactory()
+    public static async Task<MessageProduser> Create(ILogger<IMessageProduser> logger, IChannel channel)
+    {
+        await channel.ExchangeDeclareAsync(
+            exchange: BrokerConfigurations.ExchangeNames.TaskExchange,
+            type: ExchangeType.Topic
+        );
+
+        var queues = new[]
         {
-            HostName = "localhost",
-            UserName = "guest",
-            Password = "guest"
-        };
+        BrokerConfigurations.QueueNames.TaskCreatedQueue,
+        BrokerConfigurations.QueueNames.TaskUpdatedQueue,
+        BrokerConfigurations.QueueNames.TaskSearchResponseQueue,
+        BrokerConfigurations.QueueNames.CreateTaskResponceQueue
+    };
 
-        _connection = Task.Run(async () => await factory.CreateConnectionAsync()).Result;
-        _channel = Task.Run(async () => await _connection.CreateChannelAsync()).Result;
+        foreach (var queue in queues)
+        {
+            await channel.QueueDeclareAsync(queue, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(queue, BrokerConfigurations.ExchangeNames.TaskExchange, queue);
+        }
 
-        _channel.ExchangeDeclareAsync(exchange: BrokerConfigurations.ExchangeNames.TaskExchange, type: ExchangeType.Topic);
-        _channel.QueueDeclareAsync(BrokerConfigurations.QueueNames.TaskCreatedQueue, durable: true, exclusive: false, autoDelete: false);
-        _channel.QueueDeclareAsync(BrokerConfigurations.QueueNames.TaskUpdatedQueue, durable: true, exclusive: false, autoDelete: false);
-
-        _channel.QueueBindAsync(BrokerConfigurations.QueueNames.TaskCreatedQueue, BrokerConfigurations.ExchangeNames.TaskExchange, BrokerConfigurations.QueueNames.TaskCreatedQueue);
-        _channel.QueueBindAsync(BrokerConfigurations.QueueNames.TaskUpdatedQueue, BrokerConfigurations.ExchangeNames.TaskExchange, BrokerConfigurations.QueueNames.TaskUpdatedQueue);
+        return new MessageProduser(logger, channel);
     }
 
     private async Task PublishMessageAsync(string routingKey, object message)
     {
-        var json = JsonConvert.SerializeObject(message);
+        var bodyModel = new { Date = DateTime.UtcNow, Guid = Guid.NewGuid(), Payload = message };
+        var json = JsonConvert.SerializeObject(bodyModel);
         var body = Encoding.UTF8.GetBytes(json);
 
         int attempts = 0;
@@ -62,7 +71,7 @@ public class MessageProduser : IMessageProduser, IDisposable
 
                 if (attempts >= _maxRetries)
                 {
-                    _logger.LogError($"Max retries reached for {routingKey}. Giving up.");
+                    _logger.LogWarning($"Max retries reached for {routingKey}. Giving up.");
                 }
                 else
                 {
@@ -83,9 +92,18 @@ public class MessageProduser : IMessageProduser, IDisposable
         await PublishMessageAsync(BrokerConfigurations.QueueNames.TaskUpdatedQueue, new { Id = taskId });
     }
 
+    public async Task PublishTaskSearchResultAsync(Guid parentId, List<TaskModel> tasks)
+    {
+        await PublishMessageAsync(BrokerConfigurations.QueueNames.TaskSearchResponseQueue, new { ParentId = parentId, Responce = tasks });
+    }
+
+    public async Task PublishTaskCreatedResultAsync(Guid parentId, int taskId)
+    {
+        await PublishMessageAsync(BrokerConfigurations.QueueNames.CreateTaskResponceQueue, new { ParentId = parentId, TaskId = taskId });
+    }
+
     public void Dispose()
     {
         _channel?.CloseAsync();
-        _connection?.CloseAsync();
     }
 }
