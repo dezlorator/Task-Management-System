@@ -1,0 +1,20 @@
+# .NET
+.vs/
+.vscode/
+.idea/
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Dd]ist/
+[Dd]ebugFinal/
+[Dd]ebug_*
+[Dd]ist_*
+[Dd]ebugFinal_*
+[Dd]Release/
+[Dd]Release_*
+bin/
