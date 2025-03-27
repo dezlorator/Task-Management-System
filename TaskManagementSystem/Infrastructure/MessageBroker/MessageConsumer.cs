@@ -1,5 +1,6 @@
 ﻿using BusinessLogic.Services.ConsumerHandlers;
 using Domain.Constants;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -11,13 +12,13 @@ public class MessageConsumer : BackgroundService
     private IConnection _connection;
     private readonly int _maxRetries = 3;
     private readonly TimeSpan _retryDelay = TimeSpan.FromSeconds(2);
-    private readonly Dictionary<string, IConsumerHandler> _handlers;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MessageConsumer> _logger;
 
-    public MessageConsumer(IConnection connection, Dictionary<string, IConsumerHandler> handlers, ILogger<MessageConsumer> logger)
+    public MessageConsumer(IConnection connection, ILogger<MessageConsumer> logger, IServiceProvider serviceProvider)
     {
         _connection = connection;
-        _handlers = handlers;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -63,13 +64,18 @@ public class MessageConsumer : BackgroundService
         {
             try
             {
-                if (_handlers.TryGetValue(ea.RoutingKey, out var handler))
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    await handler.Handle(message);
-                }
-                else
-                {
-                    throw new KeyNotFoundException($"No handler found for routing key {ea.RoutingKey}");
+                    var handlers = scope.ServiceProvider.GetRequiredService<IDictionary<string, IConsumerHandler>>();
+
+                    if (handlers.TryGetValue(ea.RoutingKey, out var handler))
+                    {
+                        await handler.Handle(message);
+                    }
+                    else
+                    {
+                        throw new KeyNotFoundException($"No handler found for routing key {ea.RoutingKey}");
+                    }
                 }
 
                 await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);

@@ -18,11 +18,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskConditions, TaskConditions>();
-builder.Services.AddScoped<IConsumerHandler, CreateTaskHandler>();
-builder.Services.AddScoped<IConsumerHandler, SearchTaskHandler>();
+
+builder.Services.AddScoped<CreateTaskHandler>();
+builder.Services.AddScoped<SearchTaskHandler>();
+
 builder.Services.AddSingleton<IConnection>(sp =>
 {
     var factory = new ConnectionFactory
@@ -31,7 +35,6 @@ builder.Services.AddSingleton<IConnection>(sp =>
         UserName = "guest",
         Password = "guest"
     };
-
     return factory.CreateConnectionAsync().GetAwaiter().GetResult();
 });
 
@@ -41,22 +44,27 @@ builder.Services.AddScoped<IChannel>(sp =>
     return connection.CreateChannelAsync().GetAwaiter().GetResult();
 });
 
-builder.Services.AddScoped<IMessageProduser>((sp)  =>
+builder.Services.AddScoped<IMessageProduser>((sp) =>
 {
     var logger = sp.GetService<ILogger<MessageProduser>>()!;
     var channel = sp.GetService<IChannel>()!;
     return MessageProduser.Create(logger, channel).GetAwaiter().GetResult();
 });
 
-builder.Services.AddSingleton(sp => new Dictionary<string, IConsumerHandler>
-{
-    { BrokerConfigurations.QueueNames.CreateTaskQueue, sp.GetRequiredService<CreateTaskHandler>() },
-    { BrokerConfigurations.QueueNames.SearchTaskQueue, sp.GetRequiredService<SearchTaskHandler>() }
-});
+builder.Services.AddScoped<IDictionary<string, IConsumerHandler>>(sp =>
+    new Dictionary<string, IConsumerHandler>
+    {
+        {
+            BrokerConfigurations.QueueNames.CreateTaskQueue,
+            sp.GetRequiredService<CreateTaskHandler>()
+        },
+        {
+            BrokerConfigurations.QueueNames.SearchTaskQueue,
+            sp.GetRequiredService<SearchTaskHandler>()
+        }
+    });
 
 builder.Services.AddHostedService<MessageConsumer>();
-
-builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -82,8 +90,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
-
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
